@@ -11,10 +11,10 @@
 .CSEG //Inicio del código
 .ORG 0x00 
 	JMP MAIN			//Vector reset
-.ORG 0x02				//Vector interrupçion int0
-	JMP ISR_INT0
-.ORG 0x04				//Vector interrupçion int1
-	JMP ISR_INT1
+.org 0x08				//Vector interrupçion puerto b
+	JMP ISR_PCINT0
+.org 0x0020
+	JMP TIM0_OVF
 MAIN:
 //*****************************************************************************
 // Stack Pointer
@@ -31,22 +31,34 @@ MAIN:
 // Configuracion
 //*****************************************************************************
 Setup:
-	LDI R16, 0x00
+//7 SEGMENTOS
+	LDI ZH, HIGH(TABLA7SEG << 1)
+	LDI ZL, LOW(TABLA7SEG << 1)
+
+
+	LDI R16, 0b0111_1111
 	OUT DDRD, R16
+
+	LDI R16, 0b0000_1100
+	OUT DDRB, R16
 
 	LDI R16, 0b0000_1111
 	OUT DDRC, R16
 
-	LDI R16, 0b0000_1100
-	OUT PORTD, R16
+	LDI R16, 0b0000_0011
+	OUT PORTB, R16
 
-	LDI R16, (0<<ISC01) | (1<<ISC00) | (0<<ISC11) | (1<<ISC10) 
-	STS EICRA, R16					
+	LDI R16,0b0001//pines de control
+	STS PCICR,R16
 
-	SBI EIMSK, INT0
-	SBI EIMSK, INT1
+	LDI R16, 0b0000_0001
+	STS TIMSK0, R16
 
-	LDI R17, 0x00
+	LDI R16, 0b0011 //coloca la máscara a lo pines pertenecientes
+	STS PCMSK0, R16
+	
+	CALL IdelayT0	
+
 	SEI		
 //*******************************************************
 // Apagar tx y rx
@@ -54,52 +66,121 @@ Setup:
 
 	LDI R16, 0x00
 	STS UCSR0B, R16
-
+	LDI R16, 0
+	LDI R17, 0
+	LDI R18, 0
+	LDI R19, 0
+	LDI R20, 0
+	LDI R21, 0
+	LDI R22, 0
+	LDI R23, 0
 //*******************************************************
 // LOOP
 //*******************************************************
 loop:
-	OUT PORTC, R17
+	LDI ZH, HIGH(TABLA7SEG << 1)
+	LDI ZL, LOW(TABLA7SEG << 1)
+	ADD ZL, R22
+	SBI PORTB, PB2
+	LPM R20, Z
+	OUT PORTD, R20
+	CALL delaybounce2
+	CBI PORTB, PB2
+
+	CALL delaybounce2
+
+	LDI ZH, HIGH(TABLA7SEG << 1)
+	LDI ZL, LOW(TABLA7SEG << 1)
+	ADD ZL, R18
+	SBI PORTB, PB3
+	LPM R20, Z
+	OUT PORTD, R20
+
+	CALL delaybounce2
+
+	CBI PORTB, PB3
+
+	OUT PORTC, R19
 	RJMP loop
 //*****************************************************************************
 // Sub-rutinas
 //*****************************************************************************
-ISR_INT0:
+
+delaybounce2:
+	LDI R16, 255
+
+	delay2:
+		DEC R16
+		BRNE delay2
+	ret
+
+IdelayT0:
+	LDI R16, (1 << CS02) | (1 << CS00)
+	OUT TCCR0B, R16
+
+	LDI R16, 100
+	OUT TCNT0, R16
+
+	RET
+ISR_PCINT0:
 	PUSH R16
 	IN R16, SREG
 	PUSH R16
 
 	INC R17
 	SBRS R17, 1
-	RJMP Regresar1
-
+	RJMP FIN
+Verificar:
+	CLR R17
+	SBRS R21, 0
+	RJMP INCRE
+	RJMP DECRE
+INCRE:
 	INC R19 
     SBRC R19, 4 
 	CLR R19
-	CLR R17
-Regresar1:
+	RJMP FIN
+DECRE: 
+	DEC R19 
+    SBRC R19, 7
+	CLR R19
+	RJMP FIN
+FIN:
+	IN R21, PINB
 	POP R16
 	OUT SREG, R16
 	POP R16
 	RETI
-
-ISR_INT1:
+//***********************************************************************************
+//TIMER0
+//***********************************************************************************
+TIM0_OVF:
 	PUSH R16
 	IN R16, SREG
 	PUSH R16
 
-	INC R17
-	SBRS R17, 1
-	RJMP Regresar2
+	LDI R16, 100
+	OUT TCNT0, R16
 
-	DEC R19 
-    SBRC R19, 7
-	CLR R19
-	CLR R17
-
-Regresar2:
+	INC R23
+	CPI R23, 100
+	BRNE FIN2
+	CLR R23
+SUM:
+    INC R22						//Contador de segundos
+	CPI R22, 0b000_1010
+    BREQ OVERFLO
+	RJMP FIN2
+OVERFLO:
+	CLR R22
+	INC R18                         //Contador de decenas
+	CPI R18, 0b000_0110
+	BREQ OVERFLO2
+	RJMP FIN2
+OVERFLO2:
+	CLR R18
+FIN2:
 	POP R16
 	OUT SREG, R16
 	POP R16
-	NOP
 	RETI

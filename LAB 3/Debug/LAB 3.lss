@@ -1,10 +1,10 @@
 
-AVRASM ver. 2.2.8  c:\users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm Tue Feb 13 19:33:33 2024
+AVRASM ver. 2.2.8  C:\Users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm Mon Feb 19 22:50:04 2024
 
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
-c:\users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm(10): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\M328PDEF.inc'
+C:\Users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm(10): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\M328PDEF.inc'
 [builtin](2): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\m328Pdef.inc'
-c:\users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm(10): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\M328PDEF.inc'
+C:\Users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm(10): Including file 'C:/Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.7.374\avrasm\inc\M328PDEF.inc'
                                  
                                  //*****************************************************************
                                  
@@ -1041,106 +1041,186 @@ c:\users\alane\Documents\Atmel Studio\7.0\LAB 3\LAB 3\main.asm(10): Including fi
                                  ; ***** END OF FILE ******************************************************
                                  .CSEG //Inicio del código
                                  .ORG 0x00 
-000000 940c 0006                 	JMP MAIN			//Vector reset
-                                 .ORG 0x02				//Vector interrupçion int0
-000002 940c 0024                 	JMP ISR_INT0
-                                 .ORG 0x04				//Vector interrupçion int1
-000004 940c 0032                 	JMP ISR_INT1
+000000 940c 0022                 	JMP MAIN			//Vector reset
+                                 .org 0x08				//Vector interrupçion puerto b
+000008 940c 006e                 	JMP ISR_PCINT0
+                                 .org 0x0020
+000020 940c 0085                 	JMP TIM0_OVF
                                  MAIN:
                                  //*****************************************************************************
                                  // Stack Pointer
                                  //*****************************************************************************
-000006 ef0f                      	LDI R16, LOW(RAMEND)
-000007 bf0d                      	OUT SPL, R16
-000008 e018                      	LDI R17, HIGH(RAMEND)
-000009 bf1e                      	OUT SPH, R17
+000022 ef0f                      	LDI R16, LOW(RAMEND)
+000023 bf0d                      	OUT SPL, R16
+000024 e018                      	LDI R17, HIGH(RAMEND)
+000025 bf1e                      	OUT SPH, R17
                                  //*****************************************************************************
                                  // Tabla de Valores
                                  //*****************************************************************************
-00000a 7940
-00000b 3024
-00000c 1219
-00000d 7802
-00000e 1000
-00000f 0308
-000010 2146
-000011 0e06                      	TABLA7SEG: .DB 0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0x02, 0x78,  0x00, 0x10, 0x08, 0x03, 0x46, 0x21, 0x06, 0x0E
+000026 7940
+000027 3024
+000028 1219
+000029 7802
+00002a 1000
+00002b 0308
+00002c 2146
+00002d 0e06                      	TABLA7SEG: .DB 0x40, 0x79, 0x24, 0x30, 0x19, 0x12, 0x02, 0x78,  0x00, 0x10, 0x08, 0x03, 0x46, 0x21, 0x06, 0x0E
                                  //*****************************************************************************
                                  // Configuracion
                                  //*****************************************************************************
                                  Setup:
-000012 e000                      	LDI R16, 0x00
-000013 b90a                      	OUT DDRD, R16
+                                 //7 SEGMENTOS
+00002e e0f0                      	LDI ZH, HIGH(TABLA7SEG << 1)
+00002f e4ec                      	LDI ZL, LOW(TABLA7SEG << 1)
                                  
-000014 e00f                      	LDI R16, 0b0000_1111
-000015 b907                      	OUT DDRC, R16
                                  
-000016 e00c                      	LDI R16, 0b0000_1100
-000017 b90b                      	OUT PORTD, R16
+000030 e70f                      	LDI R16, 0b0111_1111
+000031 b90a                      	OUT DDRD, R16
                                  
-000018 e005                      	LDI R16, (0<<ISC01) | (1<<ISC00) | (0<<ISC11) | (1<<ISC10) 
-000019 9300 0069                 	STS EICRA, R16					
+000032 e00c                      	LDI R16, 0b0000_1100
+000033 b904                      	OUT DDRB, R16
                                  
-00001b 9ae8                      	SBI EIMSK, INT0
-00001c 9ae9                      	SBI EIMSK, INT1
+000034 e00f                      	LDI R16, 0b0000_1111
+000035 b907                      	OUT DDRC, R16
                                  
-00001d e010                      	LDI R17, 0x00
-00001e 9478                      	SEI		
+000036 e003                      	LDI R16, 0b0000_0011
+000037 b905                      	OUT PORTB, R16
+                                 
+000038 e001                      	LDI R16,0b0001//pines de control
+000039 9300 0068                 	STS PCICR,R16
+                                 
+00003b e001                      	LDI R16, 0b0000_0001
+00003c 9300 006e                 	STS TIMSK0, R16
+                                 
+00003e e003                      	LDI R16, 0b0011 //coloca la máscara a lo pines pertenecientes
+00003f 9300 006b                 	STS PCMSK0, R16
+                                 	
+000041 940e 0069                 	CALL IdelayT0	
+                                 
+000043 9478                      	SEI		
                                  //*******************************************************
                                  // Apagar tx y rx
                                  //*******************************************************
                                  
-00001f e000                      	LDI R16, 0x00
-000020 9300 00c1                 	STS UCSR0B, R16
-                                 
+000044 e000                      	LDI R16, 0x00
+000045 9300 00c1                 	STS UCSR0B, R16
+000047 e000                      	LDI R16, 0
+000048 e010                      	LDI R17, 0
+000049 e020                      	LDI R18, 0
+00004a e030                      	LDI R19, 0
+00004b e040                      	LDI R20, 0
+00004c e050                      	LDI R21, 0
+00004d e060                      	LDI R22, 0
+00004e e070                      	LDI R23, 0
                                  //*******************************************************
                                  // LOOP
                                  //*******************************************************
                                  loop:
-000022 b918                      	OUT PORTC, R17
-000023 cffe                      	RJMP loop
+00004f e0f0                      	LDI ZH, HIGH(TABLA7SEG << 1)
+000050 e4ec                      	LDI ZL, LOW(TABLA7SEG << 1)
+000051 0fe6                      	ADD ZL, R22
+000052 9a2a                      	SBI PORTB, PB2
+000053 9144                      	LPM R20, Z
+000054 b94b                      	OUT PORTD, R20
+000055 940e 0065                 	CALL delaybounce2
+000057 982a                      	CBI PORTB, PB2
+                                 
+000058 940e 0065                 	CALL delaybounce2
+                                 
+00005a e0f0                      	LDI ZH, HIGH(TABLA7SEG << 1)
+00005b e4ec                      	LDI ZL, LOW(TABLA7SEG << 1)
+00005c 0fe2                      	ADD ZL, R18
+00005d 9a2b                      	SBI PORTB, PB3
+00005e 9144                      	LPM R20, Z
+00005f b94b                      	OUT PORTD, R20
+                                 
+000060 940e 0065                 	CALL delaybounce2
+                                 
+000062 982b                      	CBI PORTB, PB3
+                                 
+000063 b938                      	OUT PORTC, R19
+000064 cfea                      	RJMP loop
                                  //*****************************************************************************
                                  // Sub-rutinas
                                  //*****************************************************************************
-                                 ISR_INT0:
-000024 930f                      	PUSH R16
-000025 b70f                      	IN R16, SREG
-000026 930f                      	PUSH R16
                                  
-000027 9513                      	INC R17
-000028 ff11                      	SBRS R17, 1
-000029 c004                      	RJMP Regresar1
+                                 delaybounce2:
+000065 ef0f                      	LDI R16, 255
                                  
-00002a 9533                      	INC R19 
-00002b fd34                          SBRC R19, 4 
-00002c 2733                      	CLR R19
-00002d 2711                      	CLR R17
-                                 Regresar1:
-00002e 910f                      	POP R16
-00002f bf0f                      	OUT SREG, R16
-000030 910f                      	POP R16
-000031 9518                      	RETI
+                                 	delay2:
+000066 950a                      		DEC R16
+000067 f7f1                      		BRNE delay2
+000068 9508                      	ret
                                  
-                                 ISR_INT1:
-000032 930f                      	PUSH R16
-000033 b70f                      	IN R16, SREG
-000034 930f                      	PUSH R16
+                                 IdelayT0:
+000069 e005                      	LDI R16, (1 << CS02) | (1 << CS00)
+00006a bd05                      	OUT TCCR0B, R16
                                  
-000035 9513                      	INC R17
-000036 ff11                      	SBRS R17, 1
-000037 c004                      	RJMP Regresar2
+00006b e604                      	LDI R16, 100
+00006c bd06                      	OUT TCNT0, R16
                                  
-000038 953a                      	DEC R19 
-000039 fd37                          SBRC R19, 7
-00003a 2733                      	CLR R19
-00003b 2711                      	CLR R17
+00006d 9508                      	RET
+                                 ISR_PCINT0:
+00006e 930f                      	PUSH R16
+00006f b70f                      	IN R16, SREG
+000070 930f                      	PUSH R16
                                  
-                                 Regresar2:
-00003c 910f                      	POP R16
-00003d bf0f                      	OUT SREG, R16
-00003e 910f                      	POP R16
-00003f 9518                      	RETI
+000071 9513                      	INC R17
+000072 ff11                      	SBRS R17, 1
+000073 c00c                      	RJMP FIN
+                                 Verificar:
+000074 2711                      	CLR R17
+000075 ff50                      	SBRS R21, 0
+000076 c001                      	RJMP INCRE
+000077 c004                      	RJMP DECRE
+                                 INCRE:
+000078 9533                      	INC R19 
+000079 fd34                          SBRC R19, 4 
+00007a 2733                      	CLR R19
+00007b c004                      	RJMP FIN
+                                 DECRE: 
+00007c 953a                      	DEC R19 
+00007d fd37                          SBRC R19, 7
+00007e 2733                      	CLR R19
+00007f c000                      	RJMP FIN
+                                 FIN:
+000080 b153                      	IN R21, PINB
+000081 910f                      	POP R16
+000082 bf0f                      	OUT SREG, R16
+000083 910f                      	POP R16
+000084 9518                      	RETI
+                                 //***********************************************************************************
+                                 //TIMER0
+                                 //***********************************************************************************
+                                 TIM0_OVF:
+000085 930f                      	PUSH R16
+000086 b70f                      	IN R16, SREG
+000087 930f                      	PUSH R16
                                  
+000088 e604                      	LDI R16, 100
+000089 bd06                      	OUT TCNT0, R16
+                                 
+00008a 9573                      	INC R23
+00008b 3674                      	CPI R23, 100
+00008c f459                      	BRNE FIN2
+00008d 2777                      	CLR R23
+                                 SUM:
+00008e 9563                          INC R22						//Contador de segundos
+00008f 306a                      	CPI R22, 0b000_1010
+000090 f009                          BREQ OVERFLO
+000091 c006                      	RJMP FIN2
+                                 OVERFLO:
+000092 2766                      	CLR R22
+000093 9523                      	INC R18                         //Contador de decenas
+000094 3026                      	CPI R18, 0b000_0110
+000095 f009                      	BREQ OVERFLO2
+000096 c001                      	RJMP FIN2
+                                 OVERFLO2:
+000097 2722                      	CLR R18
+                                 FIN2:
+000098 910f                      	POP R16
+000099 bf0f                      	OUT SREG, R16
+00009a 910f                      	POP R16
 
 
 RESOURCE USE INFORMATION
@@ -1158,39 +1238,39 @@ counted separately from r26..r31 here.
 .dseg memory usage only counts static data declared with .byte
 
 "ATmega328P" register use summary:
-x  :   0 y  :   0 z  :   0 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
+x  :   0 y  :   0 z  :   2 r0 :   0 r1 :   0 r2 :   0 r3 :   0 r4 :   0 
 r5 :   0 r6 :   0 r7 :   0 r8 :   0 r9 :   0 r10:   0 r11:   0 r12:   0 
-r13:   0 r14:   0 r15:   0 r16:  24 r17:  10 r18:   0 r19:   6 r20:   0 
-r21:   0 r22:   0 r23:   0 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
-r29:   0 r30:   0 r31:   0 
-Registers used: 3 out of 35 (8.6%)
+r13:   0 r14:   0 r15:   0 r16:  39 r17:   6 r18:   5 r19:   8 r20:   5 
+r21:   3 r22:   5 r23:   4 r24:   0 r25:   0 r26:   0 r27:   0 r28:   0 
+r29:   0 r30:   5 r31:   3 
+Registers used: 11 out of 35 (31.4%)
 
 "ATmega328P" instruction use summary:
-.lds  :   0 .sts  :   0 adc   :   0 add   :   0 adiw  :   0 and   :   0 
+.lds  :   0 .sts  :   0 adc   :   0 add   :   2 adiw  :   0 and   :   0 
 andi  :   0 asr   :   0 bclr  :   0 bld   :   0 brbc  :   0 brbs  :   0 
-brcc  :   0 brcs  :   0 break :   0 breq  :   0 brge  :   0 brhc  :   0 
+brcc  :   0 brcs  :   0 break :   0 breq  :   2 brge  :   0 brhc  :   0 
 brhs  :   0 brid  :   0 brie  :   0 brlo  :   0 brlt  :   0 brmi  :   0 
-brne  :   0 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
-brvs  :   0 bset  :   0 bst   :   0 call  :   0 cbi   :   0 cbr   :   0 
-clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   4 cls   :   0 
+brne  :   2 brpl  :   0 brsh  :   0 brtc  :   0 brts  :   0 brvc  :   0 
+brvs  :   0 bset  :   0 bst   :   0 call  :   4 cbi   :   2 cbr   :   0 
+clc   :   0 clh   :   0 cli   :   0 cln   :   0 clr   :   6 cls   :   0 
 clt   :   0 clv   :   0 clz   :   0 com   :   0 cp    :   0 cpc   :   0 
-cpi   :   0 cpse  :   0 dec   :   1 eor   :   0 fmul  :   0 fmuls :   0 
-fmulsu:   0 icall :   0 ijmp  :   0 in    :   2 inc   :   3 jmp   :   3 
-ld    :   0 ldd   :   0 ldi   :   8 lds   :   0 lpm   :   0 lsl   :   0 
+cpi   :   3 cpse  :   0 dec   :   2 eor   :   0 fmul  :   0 fmuls :   0 
+fmulsu:   0 icall :   0 ijmp  :   0 in    :   3 inc   :   5 jmp   :   3 
+ld    :   0 ldd   :   0 ldi   :  28 lds   :   0 lpm   :   4 lsl   :   0 
 lsr   :   0 mov   :   0 movw  :   0 mul   :   0 muls  :   0 mulsu :   0 
-neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :   8 pop   :   4 
-push  :   4 rcall :   0 ret   :   0 reti  :   2 rjmp  :   3 rol   :   0 
+neg   :   0 nop   :   0 or    :   0 ori   :   0 out   :  14 pop   :   4 
+push  :   4 rcall :   0 ret   :   2 reti  :   2 rjmp  :   8 rol   :   0 
 ror   :   0 sbc   :   0 sbci  :   0 sbi   :   2 sbic  :   0 sbis  :   0 
 sbiw  :   0 sbr   :   0 sbrc  :   2 sbrs  :   2 sec   :   0 seh   :   0 
 sei   :   1 sen   :   0 ser   :   0 ses   :   0 set   :   0 sev   :   0 
-sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   2 
+sez   :   0 sleep :   0 spm   :   0 st    :   0 std   :   0 sts   :   4 
 sub   :   0 subi  :   0 swap  :   0 tst   :   0 wdr   :   0 
-Instructions used: 16 out of 113 (14.2%)
+Instructions used: 24 out of 113 (21.2%)
 
 "ATmega328P" memory use summary [bytes]:
 Segment   Begin    End      Code   Data   Used    Size   Use%
 ---------------------------------------------------------------
-[.cseg] 0x000000 0x000080    112     16    128   32768   0.4%
+[.cseg] 0x000000 0x000138    240     16    256   32768   0.8%
 [.dseg] 0x000100 0x000100      0      0      0    2048   0.0%
 [.eseg] 0x000000 0x000000      0      0      0    1024   0.0%
 
